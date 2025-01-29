@@ -1,6 +1,6 @@
-# AutShop - A Vehicle Marketplace Backend
+# AutoShop - A Vehicle Marketplace Backend
 
-AutShop is a backend application built with **Spring Boot** and **PostgreSQL**, designed as a prototype for platforms like **Mobile.bg** and **Cars.bg**.
+AutoShop is a backend application built with **Spring Boot** and **PostgreSQL**, designed as a prototype for platforms like **Mobile.bg** and **Cars.bg**.
 
 ## Features
 
