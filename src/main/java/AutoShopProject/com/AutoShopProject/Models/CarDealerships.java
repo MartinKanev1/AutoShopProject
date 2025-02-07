@@ -36,7 +36,7 @@ public class CarDealerships {
     private String address;
 
     @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false)
+    @JoinColumn(name = "user_Id", nullable = false)
     private User user;
 
     @Override

@@ -1,5 +1,6 @@
 package AutoShopProject.com.AutoShopProject.Security;
 
+import AutoShopProject.com.AutoShopProject.Models.CarDealerships;
 import AutoShopProject.com.AutoShopProject.Models.SellerType;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -17,4 +18,5 @@ public class RegisterRequest {
     private String region;
     private String city;
     private SellerType type;
+    private CarDealerships carDealership;
 }

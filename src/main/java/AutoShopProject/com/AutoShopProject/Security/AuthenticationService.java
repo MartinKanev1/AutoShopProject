@@ -1,6 +1,8 @@
 package AutoShopProject.com.AutoShopProject.Security;
 
+import AutoShopProject.com.AutoShopProject.Models.CarDealerships;
 import AutoShopProject.com.AutoShopProject.Models.Roles;
+import AutoShopProject.com.AutoShopProject.Models.SellerType;
 import AutoShopProject.com.AutoShopProject.Models.User;
 import AutoShopProject.com.AutoShopProject.Repositories.UserRepository;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -45,6 +47,20 @@ public class AuthenticationService {
                 .type(request.getType())
                 .role(Roles.Dealer)
                 .build();
+
+
+        if (request.getType() == SellerType.CAR_DEALERSHIP && request.getCarDealership() != null) {
+            CarDealerships dealership = new CarDealerships();
+            dealership.setName(request.getCarDealership().getName());
+            dealership.setDateOfCreation(request.getCarDealership().getDateOfCreation());
+            dealership.setLogoImageName(request.getCarDealership().getLogoImageName());
+            dealership.setAddress(request.getCarDealership().getAddress());
+            dealership.setLogoImageType(request.getCarDealership().getLogoImageType());
+
+            dealership.setUser(user); // ВАЖНО! Свързваме CarDealerships с User
+            user.setCarDealership(dealership); // Свързваме User с CarDealerships
+        }
+
 
         userRepository.save(user);
 
