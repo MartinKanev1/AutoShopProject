@@ -1,0 +1,28 @@
+.header {
+    background-color: black !important;
+    color: white;
+}
+
+.menu-button {
+    margin-right: 10px;
+}
+
+.logo {
+    flex-grow: 1;
+    font-weight: bold;
+    text-transform: uppercase;
+}
+
+.header-icons {
+    display: flex;
+    gap: 10px;
+}
+
+a {
+    text-decoration: none; 
+    color: white !important; 
+  }
+  
+  a:hover {
+    color: #ccc; 
+  }
