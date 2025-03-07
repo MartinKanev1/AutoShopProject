@@ -23,10 +23,14 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 import jakarta.transaction.Transactional;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -39,22 +43,24 @@ public class OffersService {
     private final ReportsRepository reportsRepository;
     private final SearchHistoryService searchHistoryService;
     private final SearchHistoryRepository searchHistoryRepository;
+    private final ReportsMapper reportsMapper;
 
     private static final Logger log = LoggerFactory.getLogger(OffersService.class);
 
-    public OffersService(OffersMapper offersMapper, OffersRepository offersRepository, UserRepository userRepository,ReportsRepository reportsRepository,SearchHistoryService searchHistoryService,SearchHistoryRepository searchHistoryRepository) {
+    public OffersService(OffersMapper offersMapper, OffersRepository offersRepository, UserRepository userRepository,ReportsRepository reportsRepository,SearchHistoryService searchHistoryService,SearchHistoryRepository searchHistoryRepository,ReportsMapper reportsMapper) {
         this.offersMapper = offersMapper;
         this.offersRepository = offersRepository;
         this.userRepository = userRepository;
         this.reportsRepository = reportsRepository;
         this.searchHistoryService = searchHistoryService;
         this.searchHistoryRepository = searchHistoryRepository;
+        this.reportsMapper = reportsMapper;
     }
 
 
 
     @Transactional
-    public OffersDTO createOffer(OffersDTO offerDTO) {
+    public OffersDTO createOffer(Long userId , OffersDTO offerDTO, MultipartFile Image) throws IOException {
 
         log.info("Starting offer creation process with OffersDTO: {}", offerDTO);
 
@@ -67,19 +73,19 @@ public class OffersService {
             log.error("Validation failed: Price is missing or invalid");
             throw new IllegalArgumentException("Price must be greater than zero");
         }
-        if (offerDTO.user() == null || offerDTO.user().email() == null) {
-            log.error("Validation failed: User is missing or invalid");
-            throw new IllegalArgumentException("Valid user information is required");
+
+
+        if (userId == null) {
+            log.error("Validation failed: User ID is missing");
+            throw new IllegalArgumentException("Valid user ID is required");
         }
 
 
-        Optional<User> userOptional = userRepository.findByEmail(offerDTO.user().email());
-        if (userOptional.isEmpty()) {
-            log.error("User with email {} not found", offerDTO.user().email());
-            throw new IllegalArgumentException("User with the provided email does not exist");
-        }
-
-        User user = userOptional.get();
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> {
+                    log.error("User with ID {} not found", userId);
+                    return new IllegalArgumentException("User with the provided ID does not exist");
+                });
 
 
         Offers offer = new Offers();
@@ -88,6 +94,7 @@ public class OffersService {
         offer.setStatus(offerDTO.status());
         offer.setPostedOn(Timestamp.valueOf(LocalDateTime.now()));
         offer.setPrice(offerDTO.price());
+        offer.setCategory(offerDTO.category());
         offer.setBrand(offerDTO.brand());
         offer.setModel(offerDTO.model());
         offer.setYearOfCreation(offerDTO.yearOfCreation());
@@ -97,6 +104,9 @@ public class OffersService {
         offer.setGear(offerDTO.gear());
         offer.setPower(offerDTO.power());
         offer.setDoorCount(offerDTO.doorCount());
+        offer.setImageName(Image.getOriginalFilename());
+        offer.setImageType(Image.getContentType());
+        offer.setImageData(Image.getBytes());
         offer.setUser(user);
 
         log.info("Mapped Offers entity: {}", offer);
@@ -114,7 +124,7 @@ public class OffersService {
     }
 
     @Transactional
-    public OffersDTO updateOffer(Long offerId, OffersDTO offerDTO) {
+    public OffersDTO updateOffer(Long offerId, OffersDTO offerDTO, MultipartFile Image) throws IOException {
         log.info("Starting update process for offer ID: {}", offerId);
 
 
@@ -172,6 +182,17 @@ public class OffersService {
             existingOffer.setDoorCount(offerDTO.doorCount());
         }
 
+        if (Image != null && !  Image.isEmpty()) {
+            log.info("Updating image for offer ID: {}", offerId);
+
+            // Store image metadata and data
+            existingOffer.setImageName(Image.getOriginalFilename());
+            existingOffer.setImageType(Image.getContentType());
+            existingOffer.setImageData(Image.getBytes());
+
+            log.info("Image updated successfully for offer ID: {}", offerId);
+        }
+
         log.info("Updated offer entity: {}", existingOffer);
 
 
@@ -199,6 +220,8 @@ public class OffersService {
                 offersRepository.deleteById(offerId);
 
     }
+
+
 
     public Optional<OffersDTO> getOfferById(Long offerId) {
         return offersRepository.findById(offerId).map(offersMapper::toDTO);
@@ -246,6 +269,10 @@ public class OffersService {
 
     }
 
+    public List<ReportsDTO> getAllReports() {
+        return reportsRepository.findAll().stream().map(reportsMapper::toDTO).collect(Collectors.toList());
+    }
+
     public List<ReportsDTO> getReportsForOffer(Long offerId) {
         log.info("Fetching all reports for offer ID: {}", offerId);
 
@@ -268,32 +295,11 @@ public class OffersService {
                 .collect(Collectors.toList());
     }
 
-   /* raboti
-    public List<OffersDTO> searchOffers(OfferSearchCriteriaDTO criteria) {
-        Specification<Offers> spec = Specification.where(
-                        OffersSpecifications.hasBrand(criteria.brand()))
-                .and(OffersSpecifications.hasModel(criteria.model()))
-                .and(OffersSpecifications.hasFuel(criteria.fuel()))
-                .and(OffersSpecifications.hasGear(criteria.gear()))
-                .and(OffersSpecifications.hasColor(criteria.color()))
-                .and(OffersSpecifications.hasDoors(criteria.doorCount()))
-                .and(criteria.isDealer() != null ? OffersSpecifications.isByDealer(criteria.isDealer()) : null)
-                .and(OffersSpecifications.priceBetween(criteria.minPrice(), criteria.maxPrice()))
-                .and(OffersSpecifications.mileageBetween(criteria.minMileage(), criteria.maxMileage()))
-                .and(OffersSpecifications.powerBetween(criteria.minPower(), criteria.maxPower()))
-                .and(OffersSpecifications.yearBetween(criteria.minYear(), criteria.maxYear()));
-
-
-        List<Offers> offers = offersRepository.findAll(spec, Sort.unsorted());
-
-
-
-        return offers.stream()
-                .map(offersMapper::toDTO)
-                .collect(Collectors.toList());
+    public Long getOfferIdByReportId(Long reportId) {
+        return reportsRepository.findOfferIdByReportId(reportId);
     }
 
-    */
+
 
     public List<OffersDTO> searchOffers(Long userId, OfferSearchCriteriaDTO criteria) {
 
@@ -332,6 +338,13 @@ public class OffersService {
 
         String searchCriteriaJson = toJson(criteria);
 
+        if (isCriteriaEmpty(criteria)) {
+            System.out.println("⚠️ Skipping search history save (empty criteria)");
+            return;
+        }
+
+
+
 
         SearchHistory searchHistory = new SearchHistory();
         searchHistory.setSearchedOn(Timestamp.valueOf(LocalDateTime.now()));
@@ -345,6 +358,18 @@ public class OffersService {
 
         searchHistoryRepository.save(searchHistory);
     }
+
+    private boolean isCriteriaEmpty(OfferSearchCriteriaDTO criteria) {
+        ObjectMapper objectMapper = new ObjectMapper();
+        Map<String, Object> criteriaMap = objectMapper.convertValue(criteria, Map.class);
+
+        // ✅ Remove all null or empty values
+        criteriaMap.values().removeIf(value -> value == null || value.toString().trim().isEmpty());
+
+        // ✅ If no valid search parameters, return true (empty)
+        return criteriaMap.isEmpty();
+    }
+
 
 
 

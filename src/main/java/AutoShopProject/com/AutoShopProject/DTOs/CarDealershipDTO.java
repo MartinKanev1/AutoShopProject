@@ -8,6 +8,7 @@ public record CarDealershipDTO(
         Timestamp dateOfCreation,
         String logoImageName,
         String logoImageType,
+        byte[] logoImageData,
         String address,
         Long userId
 

@@ -4,6 +4,14 @@ import Login from "./pages/Login"; // Импортираме страницат�
 import Register from './pages/Register';
 import Home from './pages/Home';
 import PublishOffer from "./pages/PublishOffer";
+import UserInfo from "./pages/UserInfo";
+import AllDealership from "./pages/AllDealerships"
+import DealershipsInfo from "./pages/DealershipInfo";
+import EditOffer from "./pages/EditOffer";
+import MyOffers from "./pages/MyOffers"
+import Favourites from "./pages/Favourites";
+import OfferDetails from "./pages/OfferDetailsPage";
+import Adminpage from "./pages/AdminPage";
 
 function App() {
   return (
@@ -14,7 +22,15 @@ function App() {
         <Route path="/register" element={<Register />} />
         <Route path="/home" element={<Home />} />
         <Route path="/publish-offer" element={<PublishOffer />} />
-        
+        <Route path="/my-account" element={<UserInfo />} />
+        <Route path="/view-all-dealerships" element={<AllDealership />} />
+        <Route path="/dealership-info/:dealershipId" element={<DealershipsInfo />} />
+        <Route path="/edit-offer/:offerId" element={<EditOffer />} />
+        <Route path="/my-offers" element={<MyOffers />} />
+        <Route path="/my-favourites-offers" element={<Favourites />} />
+        <Route path="/view-offer/:offerId" element={<OfferDetails />} />
+        <Route path="/admin" element={<Adminpage />} />
+
       </Routes>
     </Router>
   );

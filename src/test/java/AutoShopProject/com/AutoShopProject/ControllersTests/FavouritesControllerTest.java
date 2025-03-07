@@ -1,25 +1,24 @@
 package AutoShopProject.com.AutoShopProject.ControllersTests;
 
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
+
 import AutoShopProject.com.AutoShopProject.Controllers.FavouritesController;
 import AutoShopProject.com.AutoShopProject.DTOs.FavouritesDTO;
 import AutoShopProject.com.AutoShopProject.Services.FavouritesService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
-import org.springframework.http.MediaType;
-import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.http.ResponseEntity;
 
 import java.sql.Timestamp;
+import java.time.LocalDateTime;
 import java.util.List;
 
-import static org.hamcrest.Matchers.*;
-import static org.mockito.Mockito.*;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
-
+@ExtendWith(MockitoExtension.class)
 class FavouritesControllerTest {
 
     @Mock
@@ -28,75 +27,41 @@ class FavouritesControllerTest {
     @InjectMocks
     private FavouritesController favouritesController;
 
-    private MockMvc mockMvc;
+    private FavouritesDTO favouriteDTO;
 
     @BeforeEach
     void setUp() {
-        MockitoAnnotations.openMocks(this);
-        mockMvc = MockMvcBuilders.standaloneSetup(favouritesController).build();
+        favouriteDTO = new FavouritesDTO(1L, 1L, 1L, Timestamp.valueOf(LocalDateTime.now()));
     }
 
     @Test
-    void testAddFavourite() throws Exception {
+    void testAddFavourite_Success() {
+        when(favouritesService.addFavourite(1L, 1L)).thenReturn(favouriteDTO);
 
-        Long userId = 1L;
-        Long offerId = 2L;
+        ResponseEntity<FavouritesDTO> response = favouritesController.addFavourite(1L, 1L);
 
-        FavouritesDTO favouriteDTO = new FavouritesDTO(1L, userId, offerId, Timestamp.valueOf("2025-01-11 12:00:00"));
-        when(favouritesService.addFavourite(userId, offerId)).thenReturn(favouriteDTO);
-
-
-        mockMvc.perform(post("/api/favourites")
-                        .param("userId", String.valueOf(userId))
-                        .param("offerId", String.valueOf(offerId))
-                        .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.id", is(1)))
-                .andExpect(jsonPath("$.userId", is(1)))
-                .andExpect(jsonPath("$.offerId", is(2)));
-
-        verify(favouritesService, times(1)).addFavourite(userId, offerId);
+        assertEquals(201, response.getStatusCodeValue());
+        assertEquals(1L, response.getBody().userId());
+        assertEquals(1L, response.getBody().offerId());
     }
 
     @Test
-    void testRemoveFavourite() throws Exception {
+    void testRemoveFavourite_Success() {
+        doNothing().when(favouritesService).removeFavourite(1L, 1L);
 
-        Long userId = 1L;
-        Long offerId = 2L;
+        ResponseEntity<Void> response = favouritesController.removeFavourite(1L, 1L);
 
-        doNothing().when(favouritesService).removeFavourite(userId, offerId);
-
-
-        mockMvc.perform(delete("/api/favourites")
-                        .param("userId", String.valueOf(userId))
-                        .param("offerId", String.valueOf(offerId))
-                        .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isNoContent());
-
-        verify(favouritesService, times(1)).removeFavourite(userId, offerId);
+        assertEquals(204, response.getStatusCodeValue());
     }
 
     @Test
-    void testGetUserFavourites() throws Exception {
+    void testGetUserFavourites_Success() {
+        List<FavouritesDTO> favourites = List.of(favouriteDTO);
+        when(favouritesService.getUserFavourites(1L)).thenReturn(favourites);
 
-        Long userId = 1L;
+        ResponseEntity<List<FavouritesDTO>> response = favouritesController.getUserFavourites(1L);
 
-        List<FavouritesDTO> favourites = List.of(
-                new FavouritesDTO(1L, userId, 2L, Timestamp.valueOf("2025-01-11 12:00:00")),
-                new FavouritesDTO(2L, userId, 3L, Timestamp.valueOf("2025-01-12 12:00:00"))
-        );
-
-        when(favouritesService.getUserFavourites(userId)).thenReturn(favourites);
-
-
-        mockMvc.perform(get("/api/favourites/{userId}", userId)
-                        .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$", hasSize(2)))
-                .andExpect(jsonPath("$[0].id", is(1)))
-                .andExpect(jsonPath("$[1].id", is(2)));
-
-        verify(favouritesService, times(1)).getUserFavourites(userId);
+        assertEquals(200, response.getStatusCodeValue());
+        assertEquals(favourites, response.getBody());
     }
 }
-

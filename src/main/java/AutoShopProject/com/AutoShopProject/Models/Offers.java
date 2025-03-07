@@ -33,14 +33,14 @@ public class Offers {
     private Timestamp postedOn;
 
     @Column(name = "image_name")
-    private String imageName;
+    private String ImageName;
 
     @Column(name = "image_type")
-    private String imageType;
+    private String ImageType;
 
     @Lob
     @Column(name = "image_data")
-    private byte[] imageData;
+    private byte[] ImageData;
 
     @Column(name = "brand")
     private String brand;

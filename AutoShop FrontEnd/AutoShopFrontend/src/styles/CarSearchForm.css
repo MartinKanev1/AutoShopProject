@@ -4,13 +4,13 @@
     gap: 10px;
     justify-content: center;
     padding: 15px;
-    position: absolute;
-    top: 100px; 
-    left: 50%;
-    transform: translateX(-50%);
+    position: relative;
     width: 98%; 
     max-width: 1300px; 
     border-radius: 8px;
+    padding-bottom: 100px;
+     
+    
     
 }
 

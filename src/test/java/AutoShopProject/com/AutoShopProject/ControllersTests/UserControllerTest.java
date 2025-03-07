@@ -1,89 +1,179 @@
 package AutoShopProject.com.AutoShopProject.ControllersTests;
 
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
+
 import AutoShopProject.com.AutoShopProject.Controllers.UserController;
+import AutoShopProject.com.AutoShopProject.DTOs.OffersDTO;
 import AutoShopProject.com.AutoShopProject.DTOs.UserDTO;
+import AutoShopProject.com.AutoShopProject.Models.CarDealerships;
+import AutoShopProject.com.AutoShopProject.Models.User;
+import AutoShopProject.com.AutoShopProject.Repositories.CarDealershipRepository;
+import AutoShopProject.com.AutoShopProject.Repositories.UserRepository;
 import AutoShopProject.com.AutoShopProject.Services.UserService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
-import org.springframework.http.MediaType;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.ResponseEntity;
-import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
+import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
-import static org.mockito.ArgumentMatchers.any;
-import static org.hamcrest.Matchers.*;
-import static org.mockito.Mockito.*;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
+@ExtendWith(MockitoExtension.class)
 class UserControllerTest {
 
     @Mock
     private UserService userService;
 
+    @Mock
+    private UserRepository userRepository;
+
+    @Mock
+    private CarDealershipRepository carDealershipRepository;
+
     @InjectMocks
     private UserController userController;
 
-    private MockMvc mockMvc;
+    private UserDTO userDTO;
+    private User user;
 
     @BeforeEach
     void setUp() {
-        MockitoAnnotations.openMocks(this);
-        mockMvc = MockMvcBuilders.standaloneSetup(userController).build();
+        user = new User();
+        user.setUserId(1L);
+
+        userDTO = new UserDTO("John", "Doe", "john.doe@example.com", "password",
+                "123456789", "Sofia", "Sofia", null, null, null);
     }
 
     @Test
-    void testCreateUser() throws Exception {
-        // Arrange
-        UserDTO userDTO = new UserDTO("John", "Doe", "john.doe@example.com", "password", "123456789", "Region", "City", null, null);
-        when(userService.createUser(any(UserDTO.class))).thenReturn(userDTO);
+    void testGetUserById_UserExists() {
+        when(userService.getUserById(1L)).thenReturn(Optional.of(userDTO));
 
-        // Act & Assert
-        mockMvc.perform(post("/api/users")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{" +
-                                "\"firstName\":\"John\"," +
-                                "\"lastName\":\"Doe\"," +
-                                "\"email\":\"john.doe@example.com\"," +
-                                "\"password\":\"password\"," +
-                                "\"phoneNumber\":\"123456789\"," +
-                                "\"region\":\"Region\"," +
-                                "\"city\":\"City\"}"))
-                .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.firstName", is("John")))
-                .andExpect(jsonPath("$.lastName", is("Doe")))
-                .andExpect(jsonPath("$.email", is("john.doe@example.com")));
+        ResponseEntity<UserDTO> response = userController.getUserById(1L);
 
-        verify(userService, times(1)).createUser(any(UserDTO.class));
+        assertNotNull(response);
+        assertEquals(200, response.getStatusCodeValue());
+        assertEquals("John", response.getBody().firstName());
     }
 
     @Test
-    void testUpdateUser() throws Exception {
-        // Arrange
-        Long userId = 1L;
-        UserDTO userDTO = new UserDTO("John", "Smith", "john.smith@example.com", "newpassword", "987654321", "New Region", "New City", null, null);
-        when(userService.updateUser(eq(userId), any(UserDTO.class))).thenReturn(userDTO);
+    void testGetUserById_UserNotFound() {
+        when(userService.getUserById(1L)).thenReturn(Optional.empty());
 
-        // Act & Assert
-        mockMvc.perform(put("/api/users/{id}", userId)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{" +
-                                "\"firstName\":\"John\"," +
-                                "\"lastName\":\"Smith\"," +
-                                "\"email\":\"john.smith@example.com\"," +
-                                "\"password\":\"newpassword\"," +
-                                "\"phoneNumber\":\"987654321\"," +
-                                "\"region\":\"New Region\"," +
-                                "\"city\":\"New City\"}"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.firstName", is("John")))
-                .andExpect(jsonPath("$.lastName", is("Smith")))
-                .andExpect(jsonPath("$.email", is("john.smith@example.com")));
+        ResponseEntity<UserDTO> response = userController.getUserById(1L);
 
-        verify(userService, times(1)).updateUser(eq(userId), any(UserDTO.class));
+        assertEquals(404, response.getStatusCodeValue());
+    }
+
+    @Test
+    void testCreateUser_Success() {
+        when(userService.createUser(userDTO)).thenReturn(userDTO);
+
+        ResponseEntity<UserDTO> response = userController.createUser(userDTO);
+
+        assertEquals(201, response.getStatusCodeValue());
+        assertEquals("John", response.getBody().firstName());
+    }
+
+    @Test
+    void testDeleteUser() {
+        doNothing().when(userService).deleteUser(1L);
+
+        ResponseEntity<Void> response = userController.deleteUser(1L);
+
+        assertEquals(204, response.getStatusCodeValue());
+    }
+
+    @Test
+    void testGetUserIdByEmail_UserExists() {
+        when(userService.getUserIdFromEmail("john.doe@example.com")).thenReturn(1L);
+
+        ResponseEntity<?> response = userController.getUserIdByEmail("john.doe@example.com");
+
+        assertEquals(200, response.getStatusCodeValue());
+        assertEquals(1L, ((java.util.Map<?, ?>) response.getBody()).get("userId"));
+    }
+
+    @Test
+    void testGetUserIdByEmail_UserNotFound() {
+        when(userService.getUserIdFromEmail("unknown@example.com")).thenThrow(new RuntimeException("User not found for email: unknown@example.com"));
+
+        ResponseEntity<?> response = userController.getUserIdByEmail("unknown@example.com");
+
+        assertEquals(404, response.getStatusCodeValue());
+        assertEquals("User not found for email: unknown@example.com", response.getBody());
+    }
+
+    @Test
+    void testUpdateUser_Success() throws IOException {
+        MultipartFile image = mock(MultipartFile.class);
+        when(userService.updateUser(1L, userDTO, image)).thenReturn(userDTO);
+
+        ResponseEntity<UserDTO> response = userController.updateUser(1L, userDTO, image);
+
+        assertEquals(200, response.getStatusCodeValue());
+        assertEquals("John", response.getBody().firstName());
+    }
+
+    @Test
+    void testGetUserIdByDealershipId_DealershipExists() {
+        CarDealerships dealership = new CarDealerships();
+        dealership.setDealershipId(1L);
+        dealership.setUser(user);
+
+        when(carDealershipRepository.findById(1L)).thenReturn(Optional.of(dealership));
+
+        ResponseEntity<Long> response = userController.getUserIdByDealershipId(1L);
+
+        assertEquals(200, response.getStatusCodeValue());
+        assertEquals(1L, response.getBody());
+    }
+
+    @Test
+    void testGetUserIdByDealershipId_DealershipNotFound() {
+        when(carDealershipRepository.findById(1L)).thenReturn(Optional.empty());
+
+        Exception exception = assertThrows(RuntimeException.class, () -> userController.getUserIdByDealershipId(1L));
+        assertEquals("Dealership not found", exception.getMessage());
+    }
+
+    @Test
+    void testGetDealershipIdByUserId_UserExists() {
+        CarDealerships dealership = new CarDealerships();
+        dealership.setDealershipId(1L);
+        user.setCarDealership(dealership);
+
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+
+        ResponseEntity<Long> response = userController.getDealershipIdbyUserId(1L);
+
+        assertEquals(200, response.getStatusCodeValue());
+        assertEquals(1L, response.getBody());
+    }
+
+    @Test
+    void testGetDealershipIdByUserId_UserNotFound() {
+        when(userRepository.findById(1L)).thenReturn(Optional.empty());
+
+        Exception exception = assertThrows(RuntimeException.class, () -> userController.getDealershipIdbyUserId(1L));
+        assertEquals("User not found", exception.getMessage());
+    }
+
+    @Test
+    void testGetUserOffers() {
+        List<OffersDTO> offers = List.of(mock(OffersDTO.class));
+        when(userService.getOffersByUserId(1L)).thenReturn(offers);
+
+        ResponseEntity<List<OffersDTO>> response = userController.getUserOffers(1L);
+
+        assertEquals(200, response.getStatusCodeValue());
+        assertEquals(offers, response.getBody());
     }
 }

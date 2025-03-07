@@ -1,5 +1,6 @@
 package AutoShopProject.com.AutoShopProject.DTOs;
 
+import AutoShopProject.com.AutoShopProject.Models.Roles;
 import AutoShopProject.com.AutoShopProject.Models.SellerType;
 
 public record UserDTO(
@@ -11,6 +12,7 @@ public record UserDTO(
         String region,
         String city,
         SellerType type,
+        Roles role,
         CarDealershipDTO carDealership
 ) {
 }

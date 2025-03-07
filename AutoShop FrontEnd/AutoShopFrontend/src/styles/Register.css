@@ -20,7 +20,7 @@ html, body {
     
 }
 
-.header {
+ .header {
     width: 100%;
     background-color: black;
     color: white;
@@ -32,6 +32,23 @@ html, body {
     left: 0;
     z-index: 1000;
     text-align: left;
+} 
+
+.header1 {
+    width: 100%;
+    background-color: black;
+    color: white;
+    font-size: 24px;
+    font-weight: bold;
+    padding: 15px 0; 
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 1000;
+    text-align: center;
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }
 
 .main-content {
@@ -44,7 +61,7 @@ html, body {
     padding: 20px;
     box-sizing: border-box;
     margin-top: 80px;
-    overflow: hidden;
+    overflow: auto;
     gap: 50px;
 }
 
@@ -129,4 +146,14 @@ html, body {
     text-decoration: underline;
 }
 
+@media (max-width: 768px) {
+    .main-content {
+        flex-direction: column;
+    }
+
+    .car-placeholder {
+        width: 100%;
+        max-width: 300px;
+    }
+}
 

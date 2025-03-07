@@ -1,5 +1,8 @@
 package AutoShopProject.com.AutoShopProject.ServicesTests;
 
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
+
 import AutoShopProject.com.AutoShopProject.DTOs.CarDealershipDTO;
 import AutoShopProject.com.AutoShopProject.Mappers.CarDealershipMapper;
 import AutoShopProject.com.AutoShopProject.Models.CarDealerships;
@@ -7,18 +10,19 @@ import AutoShopProject.com.AutoShopProject.Repositories.CarDealershipRepository;
 import AutoShopProject.com.AutoShopProject.Services.CarDealershipService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.sql.Timestamp;
-import java.util.ArrayList;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
-public class CarDealershipServiceTest {
+@ExtendWith(MockitoExtension.class)
+class CarDealershipServiceTest {
+
     @Mock
     private CarDealershipRepository carDealershipRepository;
 
@@ -28,79 +32,55 @@ public class CarDealershipServiceTest {
     @InjectMocks
     private CarDealershipService carDealershipService;
 
+    private CarDealerships dealership;
+    private CarDealershipDTO dealershipDTO;
+
     @BeforeEach
     void setUp() {
-        MockitoAnnotations.openMocks(this);
+        dealership = new CarDealerships();
+        dealership.setDealershipId(1L);
+        dealership.setName("Test Dealership");
+        dealership.setDateOfCreation(Timestamp.valueOf(LocalDateTime.now()));
+        dealership.setAddress("Test Address");
+
+        dealershipDTO = new CarDealershipDTO(
+                1L, "Test Dealership", Timestamp.valueOf(LocalDateTime.now()),
+                "logo.jpg", "image/jpeg", new byte[0], "Test Address", 1L
+        );
     }
 
     @Test
     void testFindAllCarDealerships() {
-        // Arrange
-        List<CarDealerships> carDealerships = new ArrayList<>();
-        CarDealerships dealership1 = new CarDealerships();
-        dealership1.setDealershipId(1L);
-        dealership1.setName("Dealership 1");
-
-        CarDealerships dealership2 = new CarDealerships();
-        dealership2.setDealershipId(2L);
-        dealership2.setName("Dealership 2");
-
-        carDealerships.add(dealership1);
-        carDealerships.add(dealership2);
-
-        List<CarDealershipDTO> dealershipDTOs = List.of(
-                new CarDealershipDTO(1L, "Dealership 1", null, "Logo1", "Type1", "Address1", 1L),
-                new CarDealershipDTO(2L, "Dealership 2", null, "Logo2", "Type2", "Address2", 2L)
-        );
-
-        when(carDealershipRepository.findAll()).thenReturn(carDealerships);
-        when(carDealershipMapper.toDto(dealership1)).thenReturn(dealershipDTOs.get(0));
-        when(carDealershipMapper.toDto(dealership2)).thenReturn(dealershipDTOs.get(1));
-
-        // Act
-        List<CarDealershipDTO> result = carDealershipService.findAllCarDealerships();
-
-        // Assert
-        assertEquals(2, result.size());
-        assertEquals("Dealership 1", result.get(0).name());
-        assertEquals("Dealership 2", result.get(1).name());
-        verify(carDealershipRepository, times(1)).findAll();
-        verify(carDealershipMapper, times(2)).toDto(any(CarDealerships.class));
-    }
-
-    @Test
-    void testGetCarDealershipById_DealershipExists() {
-        // Arrange
-        Long dealershipId = 1L;
-        CarDealerships dealership = new CarDealerships();
-        dealership.setDealershipId(dealershipId);
-        dealership.setName("Dealership 1");
-
-        CarDealershipDTO dealershipDTO = new CarDealershipDTO(dealershipId, "Dealership 1", null, "Logo1", "Type1", "Address1", 1L);
-
-        when(carDealershipRepository.findById(dealershipId)).thenReturn(Optional.of(dealership));
+        when(carDealershipRepository.findAll()).thenReturn(List.of(dealership));
         when(carDealershipMapper.toDto(dealership)).thenReturn(dealershipDTO);
 
-        // Act
-        CarDealershipDTO result = carDealershipService.getCarDealershipById(dealershipId);
+        List<CarDealershipDTO> result = carDealershipService.findAllCarDealerships();
 
-        // Assert
         assertNotNull(result);
-        assertEquals("Dealership 1", result.name());
-        verify(carDealershipRepository, times(1)).findById(dealershipId);
-        verify(carDealershipMapper, times(1)).toDto(dealership);
+        assertEquals(1, result.size());
+        assertEquals("Test Dealership", result.get(0).name());
     }
 
     @Test
-    void testGetCarDealershipById_DealershipNotFound() {
-        // Arrange
-        Long dealershipId = 1L;
-        when(carDealershipRepository.findById(dealershipId)).thenReturn(Optional.empty());
+    void testGetCarDealershipById_Exists() {
+        when(carDealershipRepository.findById(1L)).thenReturn(Optional.of(dealership));
+        when(carDealershipMapper.toDto(dealership)).thenReturn(dealershipDTO);
 
-        // Act & Assert
-        RuntimeException exception = assertThrows(RuntimeException.class, () -> carDealershipService.getCarDealershipById(dealershipId));
-        assertEquals("Dealership not found with ID: " + dealershipId, exception.getMessage());
-        verify(carDealershipRepository, times(1)).findById(dealershipId);
-        verify(carDealershipMapper, never()).toDto(any(CarDealerships.class));
+        CarDealershipDTO result = carDealershipService.getCarDealershipById(1L);
+
+        assertNotNull(result);
+        assertEquals(1L, result.dealershipId());
+        assertEquals("Test Dealership", result.name());
+    }
+
+    @Test
+    void testGetCarDealershipById_NotFound() {
+        when(carDealershipRepository.findById(1L)).thenReturn(Optional.empty());
+
+        Exception exception = assertThrows(RuntimeException.class, () ->
+                carDealershipService.getCarDealershipById(1L)
+        );
+
+        assertEquals("Dealership not found with ID: 1", exception.getMessage());
     }
 }

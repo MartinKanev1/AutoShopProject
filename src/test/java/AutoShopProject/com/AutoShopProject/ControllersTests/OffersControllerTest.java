@@ -1,155 +1,152 @@
 package AutoShopProject.com.AutoShopProject.ControllersTests;
 
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
+
 import AutoShopProject.com.AutoShopProject.Controllers.OffersController;
 import AutoShopProject.com.AutoShopProject.DTOs.OfferSearchCriteriaDTO;
 import AutoShopProject.com.AutoShopProject.DTOs.OffersDTO;
 import AutoShopProject.com.AutoShopProject.DTOs.ReportsDTO;
+import AutoShopProject.com.AutoShopProject.Models.Offers;
+import AutoShopProject.com.AutoShopProject.Models.User;
+import AutoShopProject.com.AutoShopProject.Repositories.OffersRepository;
 import AutoShopProject.com.AutoShopProject.Services.OffersService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
-import org.springframework.http.MediaType;
-import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.multipart.MultipartFile;
 
-import java.math.BigDecimal;
+import java.io.IOException;
 import java.util.List;
+import java.util.Optional;
 
-import static org.mockito.ArgumentMatchers.any;
-import static org.hamcrest.Matchers.*;
-import static org.mockito.Mockito.*;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
-
+@ExtendWith(MockitoExtension.class)
 class OffersControllerTest {
 
     @Mock
     private OffersService offersService;
 
+    @Mock
+    private OffersRepository offersRepository;
+
     @InjectMocks
     private OffersController offersController;
 
-    private MockMvc mockMvc;
+    private OffersDTO offerDTO;
+    private Offers offer;
 
     @BeforeEach
     void setUp() {
-        MockitoAnnotations.openMocks(this);
-        mockMvc = MockMvcBuilders.standaloneSetup(offersController).build();
+        offer = new Offers();
+        offer.setOfferId(1L);
+        offer.setTitle("Test Offer");
+
+        offerDTO = new OffersDTO(1L, "Test Offer", "Description", "Active", null,
+                null, "Category", "Brand", "Model", 2022,
+                "Fuel", null, "Color", "Gear", 200, 4, "image.jpg",
+                "image/jpg",  new byte[0], 1L);
     }
 
     @Test
-    void testCreateOffer() throws Exception {
+    void testCreateOffer_Success() throws IOException {
+        MultipartFile image = mock(MultipartFile.class);
+        when(offersService.createOffer(1L, offerDTO, image)).thenReturn(offerDTO);
 
-        OffersDTO offerDTO = new OffersDTO(null, "Title", "Description", "ACTIVE", null, BigDecimal.valueOf(1000), "Brand", "Model", 2022, "Diesel", BigDecimal.valueOf(20000), "Black", "Manual", 150, 4, null);
-        when(offersService.createOffer(any(OffersDTO.class))).thenReturn(offerDTO);
+        ResponseEntity<OffersDTO> response = offersController.createOffer(1L, offerDTO, image);
 
-
-        mockMvc.perform(post("/api/offers")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{" +
-                                "\"title\":\"Title\"," +
-                                "\"description\":\"Description\"," +
-                                "\"status\":\"ACTIVE\"," +
-                                "\"price\":1000," +
-                                "\"brand\":\"Brand\"," +
-                                "\"model\":\"Model\"," +
-                                "\"yearOfCreation\":2022," +
-                                "\"fuel\":\"Diesel\"," +
-                                "\"mileage\":20000," +
-                                "\"color\":\"Black\"," +
-                                "\"gear\":\"Manual\"," +
-                                "\"power\":150," +
-                                "\"doorCount\":4}"))
-                .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.title", is("Title")))
-                .andExpect(jsonPath("$.price", is(1000)));
-
-        verify(offersService, times(1)).createOffer(any(OffersDTO.class));
+        assertEquals(201, response.getStatusCodeValue());
+        assertEquals("Test Offer", response.getBody().title());
     }
 
     @Test
-    void testUpdateOffer() throws Exception {
+    void testUpdateOffer_Success() throws IOException {
+        MultipartFile image = mock(MultipartFile.class);
+        when(offersService.updateOffer(1L, offerDTO, image)).thenReturn(offerDTO);
 
-        Long offerId = 1L;
-        OffersDTO offerDTO = new OffersDTO(null, "Title", "Description", "ACTIVE", null, BigDecimal.valueOf(1000), "Brand", "Model", 2022, "Diesel", BigDecimal.valueOf(20000), "Black", "Manual", 150, 4, null);
-        when(offersService.updateOffer(eq(offerId), any(OffersDTO.class))).thenReturn(offerDTO);
+        ResponseEntity<OffersDTO> response = offersController.updateOffer(1L, offerDTO, image);
 
-
-        mockMvc.perform(put("/api/offers/{id}", offerId)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{" +
-                                "\"title\":\"Updated Title\"," +
-                                "\"description\":\"Updated Description\"," +
-                                "\"status\":\"ACTIVE\"," +
-                                "\"price\":1500," +
-                                "\"brand\":\"Updated Brand\"," +
-                                "\"model\":\"Updated Model\"," +
-                                "\"yearOfCreation\":2023," +
-                                "\"fuel\":\"Petrol\"," +
-                                "\"mileage\":10000," +
-                                "\"color\":\"Red\"," +
-                                "\"gear\":\"Automatic\"," +
-                                "\"power\":180," +
-                                "\"doorCount\":5}"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.title", is("Updated Title")))
-                .andExpect(jsonPath("$.price", is(1500)));
-
-        verify(offersService, times(1)).updateOffer(eq(offerId), any(OffersDTO.class));
+        assertEquals(200, response.getStatusCodeValue());
+        assertEquals("Test Offer", response.getBody().title());
     }
 
     @Test
-    void testGetAllOffers() throws Exception {
-
-        List<OffersDTO> offers = List.of(
-                new OffersDTO(null, "Title", "Description", "ACTIVE", null, BigDecimal.valueOf(1000), "Brand", "Model", 2022, "Diesel", BigDecimal.valueOf(20000), "Black", "Manual", 150, 4, null)
-        );
+    void testGetAllOffers() {
+        List<OffersDTO> offers = List.of(offerDTO);
         when(offersService.getAllOffers()).thenReturn(offers);
 
+        ResponseEntity<List<OffersDTO>> response = offersController.getAllOffers();
 
-        mockMvc.perform(get("/api/offers")
-                        .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$", hasSize(2)))
-                .andExpect(jsonPath("$[0].title", is("Title 1")))
-                .andExpect(jsonPath("$[1].title", is("Title 2")));
-
-        verify(offersService, times(1)).getAllOffers();
+        assertEquals(200, response.getStatusCodeValue());
+        assertEquals(offers, response.getBody());
     }
 
     @Test
-    void testDeleteOffer() throws Exception {
+    void testDeleteOffer() {
+        doNothing().when(offersService).deleteOffer(1L);
 
-        Long offerId = 1L;
-        doNothing().when(offersService).deleteOffer(offerId);
+        ResponseEntity<Void> response = offersController.deleteOffer(1L);
 
-
-        mockMvc.perform(delete("/api/offers/{id}", offerId)
-                        .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isNoContent());
-
-        verify(offersService, times(1)).deleteOffer(offerId);
+        assertEquals(204, response.getStatusCodeValue());
     }
 
     @Test
-    void testReportOffer() throws Exception {
+    void testGetOfferById() {
+        when(offersService.getOfferById(1L)).thenReturn(Optional.of(offerDTO));
 
-        Long offerId = 1L;
-        ReportsDTO reportDTO = new ReportsDTO(null, 1L, offerId, "Spam", null);
-        when(offersService.reportOffer(eq(offerId), any(ReportsDTO.class))).thenReturn(reportDTO);
+        ResponseEntity<Optional<OffersDTO>> response = offersController.getOfferById(1L);
 
+        assertEquals(200, response.getStatusCodeValue());
+        assertTrue(response.getBody().isPresent());
+        assertEquals("Test Offer", response.getBody().get().title());
+    }
 
-        mockMvc.perform(post("/api/offers/{id}/report", offerId)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{" +
-                                "\"reason\":\"Spam\"," +
-                                "\"userId\":1}"))
-                .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.reason", is("Spam")));
+    @Test
+    void testReportOffer() {
+        ReportsDTO reportDTO = new ReportsDTO(1L, 1L, 1L, "Fraud", null);
+        when(offersService.reportOffer(1L, reportDTO)).thenReturn(reportDTO);
 
-        verify(offersService, times(1)).reportOffer(eq(offerId), any(ReportsDTO.class));
+        ResponseEntity<ReportsDTO> response = offersController.reportOffer(1L, reportDTO);
+
+        assertEquals(201, response.getStatusCodeValue());
+        assertEquals("Fraud", response.getBody().reason());
+    }
+
+    @Test
+    void testSearchOffers() {
+        OfferSearchCriteriaDTO criteria = mock(OfferSearchCriteriaDTO.class);
+        List<OffersDTO> offers = List.of(offerDTO);
+        when(offersService.searchOffers(1L, criteria)).thenReturn(offers);
+
+        ResponseEntity<List<OffersDTO>> response = offersController.searchOffers(1L, criteria);
+
+        assertEquals(200, response.getStatusCodeValue());
+        assertEquals(offers, response.getBody());
+    }
+
+    @Test
+    void testGetUserIdFromOfferId() {
+        User user = new User();
+        user.setUserId(1L);
+        offer.setUser(user);
+        when(offersRepository.findById(1L)).thenReturn(Optional.of(offer));
+
+        ResponseEntity<Long> response = offersController.getUserIdfromOfferId(1L);
+
+        assertEquals(200, response.getStatusCodeValue());
+        assertEquals(1L, response.getBody());
+    }
+
+    @Test
+    void testGetOfferIdByReportId() {
+        when(offersService.getOfferIdByReportId(1L)).thenReturn(1L);
+
+        ResponseEntity<?> response = offersController.getOfferIdByReportId(1L);
+
+        assertEquals(200, response.getStatusCodeValue());
+        assertEquals(1L, response.getBody());
     }
 }
-

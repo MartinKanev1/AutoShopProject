@@ -56,6 +56,8 @@ public class AuthenticationService {
             dealership.setLogoImageName(request.getCarDealership().getLogoImageName());
             dealership.setAddress(request.getCarDealership().getAddress());
             dealership.setLogoImageType(request.getCarDealership().getLogoImageType());
+            dealership.setLogoImageData(request.getCarDealership().getLogoImageData());
+            dealership.setLogoImageData(request.getCarDealership().getLogoImageData());
 
             dealership.setUser(user); // ВАЖНО! Свързваме CarDealerships с User
             user.setCarDealership(dealership); // Свързваме User с CarDealerships

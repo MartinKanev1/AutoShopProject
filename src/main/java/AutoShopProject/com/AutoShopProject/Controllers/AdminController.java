@@ -61,5 +61,7 @@ public class AdminController {
         List<ReportsDTO> reports = offerService.getReportsForOffer(id);
         return ResponseEntity.ok(reports);
     }
+
+
 }
 

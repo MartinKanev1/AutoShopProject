@@ -10,6 +10,7 @@ public record OffersDTO(
         String status,
         Timestamp postedOn,
         BigDecimal price,
+        String category,
         String brand,
         String model,
         Integer yearOfCreation,
@@ -19,7 +20,11 @@ public record OffersDTO(
         String gear,
         Integer power,
         Integer doorCount,
+        String ImageName,
+        String ImageType,
+        byte[] ImageData,
 
-        UserDTO user
+        Long userId
+
 ) {
 }

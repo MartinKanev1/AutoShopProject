@@ -2,11 +2,12 @@ package AutoShopProject.com.AutoShopProject.Mappers;
 
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
+import org.mapstruct.MappingConstants;
 import org.mapstruct.factory.Mappers;
 import AutoShopProject.com.AutoShopProject.Models.Reports;
 import AutoShopProject.com.AutoShopProject.DTOs.ReportsDTO;
 
-@Mapper
+@Mapper(componentModel = MappingConstants.ComponentModel.SPRING)
 public interface ReportsMapper {
 
 

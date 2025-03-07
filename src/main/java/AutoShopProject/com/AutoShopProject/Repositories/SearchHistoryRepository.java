@@ -11,4 +11,6 @@ import java.util.List;
 public interface SearchHistoryRepository extends JpaRepository<SearchHistory, Long> {
 
     List<SearchHistory> findTop10ByUserOrderBySearchedOnDesc(User user);
+
+    //boolean existsByUserIdAndSearchCriteria(Long userId, String searchCriteriaJson);
 }

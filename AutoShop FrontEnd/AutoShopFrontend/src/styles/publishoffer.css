@@ -5,6 +5,16 @@
     height: 100vh;
     background-color: #d3d3d3;
     padding: 20px;
+    min-height: 100vh;
+}
+
+.publish-offer-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh; 
+    background-color: #d3d3d3;
+    padding: 20px;
 }
 
 .offer-box {
@@ -19,24 +29,24 @@
     width: 80%;
     max-width: 900px;
     gap: 20px;
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
+    position: relative; 
 }
+
 
 .offer-content {
     display: flex;
     justify-content: space-between;
     width: 100%;
+    flex-wrap: wrap;
     gap: 20px;
+    align-items: flex-start;
 }
 
 .grid-container {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
     gap: 20px;
-    width: 60%;
+    width: 40%;
 }
 
 .offer-details input,
@@ -92,6 +102,75 @@
 
 .publish-offer-button:hover {
     background-color: #333;
+}
+
+.edit-button{
+    background-color: blue;
+}
+
+.delete-offer-button {
+    background-color: red;
+}
+
+.cancel-button {
+    background-color: red;
+}
+
+.save-button{
+    background-color: blue;
+}
+
+
+@media (max-width: 1024px) {
+    .grid-container {
+        grid-template-columns: repeat(1, 1fr); 
+        width: 100%;
+    }
+
+    .image-upload {
+        width: 100%;
+        display: flex;
+        justify-content: center;
+    }
+
+    .image-preview {
+        max-width: 250px; 
+    }
+}
+
+@media (max-width: 768px) {
+    .offer-box {
+        width: 95%; 
+        padding: 20px;
+    }
+
+    .grid-container {
+        grid-template-columns: 1fr; 
+        gap: 15px;
+    }
+
+    .image-upload {
+        width: 100%;
+        text-align: center; 
+    }
+
+    .image-preview {
+        max-width: 200px; 
+    }
+
+    .publish-offer-button {
+        width: 100%; 
+    }
+}
+@media (max-width: 480px) {
+    body {
+        font-size: 14px; 
+    }
+
+    .publish-offer-button {
+        padding: 14px;
+        font-size: 16px; 
+    }
 }
 
 

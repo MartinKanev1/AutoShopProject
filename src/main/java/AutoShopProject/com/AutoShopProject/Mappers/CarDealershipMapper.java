@@ -7,9 +7,12 @@ import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.MappingConstants;
 
+import java.util.Base64;
+
 
 @Mapper(componentModel = MappingConstants.ComponentModel.SPRING)
 public interface CarDealershipMapper {
+
 
 
     CarDealershipDTO toDto(CarDealerships carDealership);
@@ -19,9 +22,13 @@ public interface CarDealershipMapper {
     @Mapping(target = "dateOfCreation", source = "dto.dateOfCreation")
     @Mapping(target = "logoImageName", source = "dto.logoImageName")
     @Mapping(target = "logoImageType", source = "dto.logoImageType")
+    @Mapping(target = "logoImageData", source = "dto.logoImageData")
     @Mapping(target = "address", source = "dto.address")
     @Mapping(target = "user.userId", source = "dto.userId")
 
     CarDealerships toEntity(CarDealershipDTO dto);
+
+
+
 }
 

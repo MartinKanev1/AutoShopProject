@@ -20,6 +20,7 @@ public interface UserMapper {
     @Mapping(target = "region", source = "dto.region")
     @Mapping(target = "city", source = "dto.city")
     @Mapping(target = "type", source = "dto.type")
+    @Mapping(target = "role", source = "dto.role")
     @Mapping(target = "carDealership", source = "dto.carDealership")
 
     User toEntity(UserDTO dto, Long id);

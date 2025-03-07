@@ -10,3 +10,15 @@
     padding: 20px;
     box-sizing: border-box;
 }
+@media (max-width: 768px) {
+    .home-container {
+        padding: 10px; 
+        justify-content: flex-start; 
+    }
+}
+
+@media (max-width: 480px) {
+    .home-container {
+        padding: 5px;
+    }
+}

@@ -1,5 +1,8 @@
 package AutoShopProject.com.AutoShopProject.ServicesTests;
 
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
+
 import AutoShopProject.com.AutoShopProject.DTOs.FavouritesDTO;
 import AutoShopProject.com.AutoShopProject.Models.Favourites;
 import AutoShopProject.com.AutoShopProject.Models.Offers;
@@ -10,19 +13,17 @@ import AutoShopProject.com.AutoShopProject.Repositories.UserRepository;
 import AutoShopProject.com.AutoShopProject.Services.FavouritesService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
-
+@ExtendWith(MockitoExtension.class)
 class FavouritesServiceTest {
 
     @Mock
@@ -37,121 +38,122 @@ class FavouritesServiceTest {
     @InjectMocks
     private FavouritesService favouritesService;
 
+    private User user;
+    private Offers offer;
+    private Favourites favourite;
+    private FavouritesDTO favouriteDTO;
+
     @BeforeEach
     void setUp() {
-        MockitoAnnotations.openMocks(this);
-    }
+        user = new User();
+        user.setUserId(1L);
 
-    @Test
-    void testAddFavourite() {
+        offer = new Offers();
+        offer.setOfferId(1L);
 
-        Long userId = 1L;
-        Long offerId = 1L;
-
-        User user = new User();
-        user.setUserId(userId);
-
-        Offers offer = new Offers();
-        offer.setOfferId(offerId);
-
-        Favourites favourite = new Favourites();
+        favourite = new Favourites();
         favourite.setId(1L);
         favourite.setUser(user);
         favourite.setOffer(offer);
         favourite.setAddedOn(Timestamp.valueOf(LocalDateTime.now()));
 
-        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
-        when(offersRepository.findById(offerId)).thenReturn(Optional.of(offer));
-        when(favouritesRepository.existsByUserAndOffer(user, offer)).thenReturn(false);
-        when(favouritesRepository.save(any(Favourites.class))).thenReturn(favourite);
-
-
-        FavouritesDTO result = favouritesService.addFavourite(userId, offerId);
-
-
-        assertNotNull(result);
-        assertEquals(userId, result.userId());
-        assertEquals(offerId, result.offerId());
-        verify(userRepository, times(1)).findById(userId);
-        verify(offersRepository, times(1)).findById(offerId);
-        verify(favouritesRepository, times(1)).existsByUserAndOffer(user, offer);
-        verify(favouritesRepository, times(1)).save(any(Favourites.class));
+        favouriteDTO = new FavouritesDTO(1L, 1L, 1L, favourite.getAddedOn());
     }
 
     @Test
-    void testRemoveFavourite() {
+    void testAddFavourite_Success() {
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+        when(offersRepository.findById(1L)).thenReturn(Optional.of(offer));
+        when(favouritesRepository.existsByUserAndOffer(user, offer)).thenReturn(false);
+        when(favouritesRepository.save(any(Favourites.class))).thenReturn(favourite);
 
-        Long userId = 1L;
-        Long offerId = 1L;
+        FavouritesDTO result = favouritesService.addFavourite(1L, 1L);
 
-        User user = new User();
-        user.setUserId(userId);
+        assertNotNull(result);
+        assertEquals(1L, result.userId());
+        assertEquals(1L, result.offerId());
+    }
 
-        Offers offer = new Offers();
-        offer.setOfferId(offerId);
+    @Test
+    void testAddFavourite_UserNotFound() {
+        when(userRepository.findById(1L)).thenReturn(Optional.empty());
 
-        Favourites favourite = new Favourites();
-        favourite.setId(1L);
-        favourite.setUser(user);
-        favourite.setOffer(offer);
+        Exception exception = assertThrows(IllegalArgumentException.class, () ->
+                favouritesService.addFavourite(1L, 1L)
+        );
 
-        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
-        when(offersRepository.findById(offerId)).thenReturn(Optional.of(offer));
+        assertEquals("User with ID 1 not found", exception.getMessage());
+    }
+
+    @Test
+    void testAddFavourite_OfferNotFound() {
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+        when(offersRepository.findById(1L)).thenReturn(Optional.empty());
+
+        Exception exception = assertThrows(IllegalArgumentException.class, () ->
+                favouritesService.addFavourite(1L, 1L)
+        );
+
+        assertEquals("Offer with ID 1 not found", exception.getMessage());
+    }
+
+    @Test
+    void testAddFavourite_AlreadyExists() {
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+        when(offersRepository.findById(1L)).thenReturn(Optional.of(offer));
+        when(favouritesRepository.existsByUserAndOffer(user, offer)).thenReturn(true);
+
+        Exception exception = assertThrows(IllegalStateException.class, () ->
+                favouritesService.addFavourite(1L, 1L)
+        );
+
+        assertEquals("This offer is already in the user's favorites", exception.getMessage());
+    }
+
+    @Test
+    void testRemoveFavourite_Success() {
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+        when(offersRepository.findById(1L)).thenReturn(Optional.of(offer));
         when(favouritesRepository.findByUserAndOffer(user, offer)).thenReturn(Optional.of(favourite));
+        doNothing().when(favouritesRepository).delete(favourite);
 
-
-        favouritesService.removeFavourite(userId, offerId);
-
-
-        verify(userRepository, times(1)).findById(userId);
-        verify(offersRepository, times(1)).findById(offerId);
-        verify(favouritesRepository, times(1)).findByUserAndOffer(user, offer);
+        assertDoesNotThrow(() -> favouritesService.removeFavourite(1L, 1L));
         verify(favouritesRepository, times(1)).delete(favourite);
     }
 
     @Test
-    void testGetUserFavourites() {
+    void testRemoveFavourite_NotFound() {
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+        when(offersRepository.findById(1L)).thenReturn(Optional.of(offer));
+        when(favouritesRepository.findByUserAndOffer(user, offer)).thenReturn(Optional.empty());
 
-        Long userId = 1L;
+        Exception exception = assertThrows(IllegalArgumentException.class, () ->
+                favouritesService.removeFavourite(1L, 1L)
+        );
 
-        User user = new User();
-        user.setUserId(userId);
+        assertEquals("Favorite not found for user ID 1 and offer ID 1", exception.getMessage());
+    }
 
-        Offers offer1 = new Offers();
-        offer1.setOfferId(1L);
+    @Test
+    void testGetUserFavourites_Success() {
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+        when(favouritesRepository.findAllByUser(user)).thenReturn(List.of(favourite));
 
-        Offers offer2 = new Offers();
-        offer2.setOfferId(2L);
-
-        Favourites favourite1 = new Favourites();
-        favourite1.setId(1L);
-        favourite1.setUser(user);
-        favourite1.setOffer(offer1);
-        favourite1.setAddedOn(Timestamp.valueOf(LocalDateTime.now()));
-
-        Favourites favourite2 = new Favourites();
-        favourite2.setId(2L);
-        favourite2.setUser(user);
-        favourite2.setOffer(offer2);
-        favourite2.setAddedOn(Timestamp.valueOf(LocalDateTime.now()));
-
-        List<Favourites> favourites = new ArrayList<>();
-        favourites.add(favourite1);
-        favourites.add(favourite2);
-
-        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
-        when(favouritesRepository.findAllByUser(user)).thenReturn(favourites);
-
-
-        List<FavouritesDTO> result = favouritesService.getUserFavourites(userId);
-
+        List<FavouritesDTO> result = favouritesService.getUserFavourites(1L);
 
         assertNotNull(result);
-        assertEquals(2, result.size());
-        assertEquals(1L, result.get(0).offerId());
-        assertEquals(2L, result.get(1).offerId());
-        verify(userRepository, times(1)).findById(userId);
-        verify(favouritesRepository, times(1)).findAllByUser(user);
+        assertEquals(1, result.size());
+        assertEquals(1L, result.get(0).userId());
+    }
+
+    @Test
+    void testGetUserFavourites_UserNotFound() {
+        when(userRepository.findById(1L)).thenReturn(Optional.empty());
+
+        Exception exception = assertThrows(IllegalArgumentException.class, () ->
+                favouritesService.getUserFavourites(1L)
+        );
+
+        assertEquals("User with ID 1 not found", exception.getMessage());
     }
 }
-

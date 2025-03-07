@@ -1,23 +1,22 @@
 package AutoShopProject.com.AutoShopProject.Services;
 
+import AutoShopProject.com.AutoShopProject.DTOs.OffersDTO;
 import AutoShopProject.com.AutoShopProject.Mappers.CarDealershipMapper;
+import AutoShopProject.com.AutoShopProject.Mappers.OffersMapper;
 import AutoShopProject.com.AutoShopProject.Models.CarDealerships;
 import AutoShopProject.com.AutoShopProject.Models.SellerType;
 import AutoShopProject.com.AutoShopProject.Repositories.CarDealershipRepository;
 import jakarta.transaction.Transactional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import AutoShopProject.com.AutoShopProject.Models.User;
 import AutoShopProject.com.AutoShopProject.DTOs.UserDTO;
 import AutoShopProject.com.AutoShopProject.Repositories.UserRepository;
 import AutoShopProject.com.AutoShopProject.Mappers.UserMapper;
-import org.springframework.web.ErrorResponse;
+import org.springframework.web.multipart.MultipartFile;
 
-import java.sql.Timestamp;
-import java.time.LocalDateTime;
-import java.util.EnumSet;
+import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -29,15 +28,18 @@ public class UserService {
     private final CarDealershipRepository carDealershipRepository;
     private final UserMapper userMapper;
     private final CarDealershipMapper carDealershipMapper;
+    private final OffersMapper offersMapper;
 
     public UserService(UserRepository userRepository,
                        CarDealershipRepository carDealershipRepository,
                        UserMapper userMapper,
-                       CarDealershipMapper carDealershipMapper) {
+                       CarDealershipMapper carDealershipMapper,
+                       OffersMapper offersMapper) {
         this.userRepository = userRepository;
         this.carDealershipRepository = carDealershipRepository;
         this.userMapper = userMapper;
         this.carDealershipMapper = carDealershipMapper;
+        this.offersMapper = offersMapper;
     }
 
     // Вземане на потребител по ID
@@ -46,6 +48,13 @@ public class UserService {
         return userOptional.map(userMapper::toDto);
     }
 
+    public Long getUserIdFromEmail(String email) {
+        return userRepository.findByEmail(email)
+                .map(User::getUserId) // Extract userId if present
+                .orElseThrow(() -> new RuntimeException("User not found for email: " + email)); // Throw error if missing
+    }
+
+
 
     public List<UserDTO> findAllUsers() {
         List<User> users = userRepository.findAll();
@@ -53,21 +62,6 @@ public class UserService {
                 .map(userMapper::toDto)
                 .collect(Collectors.toList());
     }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -158,11 +152,8 @@ public class UserService {
 
 
 
-
-
-
     @Transactional
-    public UserDTO updateUser(Long id, UserDTO updatedUserDTO) {
+    public UserDTO updateUser(Long id, UserDTO updatedUserDTO, MultipartFile logoImage) throws IOException {
 
         User existingUser = userRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("User not found with ID: " + id));
@@ -183,21 +174,46 @@ public class UserService {
                 throw new IllegalArgumentException("Car dealership details are required for CAR_DEALERSHIP users");
             }
 
+            CarDealerships existingDealership = existingUser.getCarDealership();
 
-            if (existingUser.getCarDealership() != null) {
-                CarDealerships existingDealership = existingUser.getCarDealership();
+            if (existingDealership != null) {
+
                 CarDealerships updatedDealership = carDealershipMapper.toEntity(updatedUserDTO.carDealership());
 
                 existingDealership.setName(updatedDealership.getName());
                 existingDealership.setDateOfCreation(updatedDealership.getDateOfCreation());
-                existingDealership.setLogoImageName(updatedDealership.getLogoImageName());
-                existingDealership.setLogoImageType(updatedDealership.getLogoImageType());
                 existingDealership.setAddress(updatedDealership.getAddress());
+
+
+                if (logoImage != null && !logoImage.isEmpty()) {
+                    existingDealership.setLogoImageName(logoImage.getOriginalFilename());
+                    existingDealership.setLogoImageType(logoImage.getContentType());
+                    existingDealership.setLogoImageData(logoImage.getBytes());
+
+                    System.out.println("Saving Image: " + logoImage.getOriginalFilename() + " (" + logoImage.getSize() + " bytes)");
+                } else {
+                    System.out.println("No new image provided, keeping old image.");
+                }
+
+
+                carDealershipRepository.save(existingDealership);
 
             } else {
 
                 CarDealerships newDealership = carDealershipMapper.toEntity(updatedUserDTO.carDealership());
                 newDealership.setUser(existingUser);
+
+
+                if (logoImage != null && !logoImage.isEmpty()) {
+                    newDealership.setLogoImageName(logoImage.getOriginalFilename());
+                    newDealership.setLogoImageType(logoImage.getContentType());
+                    newDealership.setLogoImageData(logoImage.getBytes());
+
+                    System.out.println("Saving New Image: " + logoImage.getOriginalFilename() + " (" + logoImage.getSize() + " bytes)");
+                }
+
+
+                carDealershipRepository.save(newDealership);
                 existingUser.setCarDealership(newDealership);
             }
         } else {
@@ -208,11 +224,14 @@ public class UserService {
             }
         }
 
-
         User savedUser = userRepository.save(existingUser);
-
         return userMapper.toDto(savedUser);
     }
+
+
+
+
+
 
     @Transactional
     public void deleteUser(Long id) {
@@ -229,6 +248,17 @@ public class UserService {
         userRepository.delete(existingUser);
     }
 
+
+    public List<OffersDTO> getOffersByUserId(Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+
+        return user.getOffers().stream().map(offersMapper::toDTO).collect(Collectors.toList());
+
+
+
+    }
 
 
 

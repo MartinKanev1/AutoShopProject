@@ -5,7 +5,7 @@ import "../styles/Register.css";
 import carImage1 from '../assets/car1.jpg';
 import carImage2 from '../assets/car2.jpg';
 import Footer from '../components/Footer';
-import { registerUser } from "../services/authService"; // Импортираме API функцията
+import { registerUser } from "../services/authService"; 
 
 const sellerTypes = [
   { value: "PRIVATE_SELLER", label: "Private Seller" },
@@ -23,7 +23,7 @@ const Register = () => {
     region: "",
     city: "",
     type: "PRIVATE_SELLER",
-    dealership: {
+    carDealership: {
       name: "",
       dateOfCreation: "",
       logoImageName: "",
@@ -44,10 +44,13 @@ const Register = () => {
   };
 
   const handleSellerTypeChange = (event) => {
-    setSellerType(event.target.value);
+    const selectedType = event.target.value;
+    setSellerType(selectedType);
+  
     setFormData((prevData) => ({
       ...prevData,
-      type: event.target.value
+      type: selectedType,
+      dcarDealership: selectedType === "CAR_DEALERSHIP" ? prevData.carDealership : {}
     }));
   };
 
@@ -55,8 +58,11 @@ const Register = () => {
     const { name, value } = event.target;
     setFormData((prevData) => ({
       ...prevData,
-      dealership: {
-        ...prevData.dealership,
+      carDealership: {
+        ...prevData.carDealership,
+        name: prevData.carDealership?.name || "",
+        dateOfCreation: prevData.carDealership?.dateOfCreation || "",
+        address: prevData.carDealership?.address || "",
         [name]: value
       }
     }));
@@ -68,7 +74,7 @@ const Register = () => {
       const response = await registerUser(formData);
       console.log("Registration successful:", response);
       alert("Registration successful!");
-      navigate("/home"); // Пренасочване след успешна регистрация
+      navigate("/home"); 
     } catch (error) {
       console.error("Registration error:", error);
       setError("Registration failed. Please try again.");
@@ -77,7 +83,7 @@ const Register = () => {
 
   return (
     <Container maxWidth={false} className="register-container">
-      <Box className="header">CarsHub</Box>
+      <Box className="header1">Welcome to CarsHub!</Box>
       <Box className="main-content">
 
 

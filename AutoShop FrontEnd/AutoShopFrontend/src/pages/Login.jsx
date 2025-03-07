@@ -5,7 +5,7 @@ import "../styles/Login.css";
 import carImage1 from "../assets/car1.jpg";
 import carImage2 from "../assets/car2.jpg";
 import Footer from "../components/Footer";
-import { loginUser } from "../services/authService"; // Импортираме login API
+import { loginUser } from "../services/authService"; 
 
 const Login = () => {
   const navigate = useNavigate();
@@ -19,7 +19,7 @@ const Login = () => {
       const response = await loginUser(email, password);
       console.log("Login successful:", response);
       alert("Login successful!");
-      navigate("/home"); // Пренасочване след успешен login
+      navigate("/home"); 
     } catch (error) {
       console.error("Login error:", error);
       setError("Invalid email or password. Please try again.");
@@ -28,7 +28,7 @@ const Login = () => {
 
   return (
     <Container maxWidth={false} className="login-container">
-      <Box className="header">CarsHub</Box>
+      <Box className="header1">Welcome to CarsHub!</Box>
 
       <Box className="main-content">
         {/* Left Car Image */}
