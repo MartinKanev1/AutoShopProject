@@ -29,6 +29,7 @@ AutoShop is a fullstack application built with **Spring Boot**,**React** and **P
 - **PostgreSQL**
 - **JUnit** (for unit testing)
 
+![image](https://github.com/user-attachments/assets/96bdc6da-0e0c-4858-9471-ec1274c16bbe)
 
 
 
